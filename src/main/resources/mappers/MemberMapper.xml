@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ssg.demo.mappers.MemberMapper">
+    <select id="selectUnassignedWarehouseManagers" resultType="com.ssg.demo.domain.MemberDTO">
+        SELECT member_code AS memberCode,
+               name,
+               email
+        FROM tbl_member
+        WHERE member_code NOT IN (
+            SELECT manager_code FROM tbl_warehouse WHERE manager_code IS NOT NULL
+        )
+    </select>
+</mapper>

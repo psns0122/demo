@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ssg.demo.mappers.WarehouseMapper">
+    <select id="selectAllWarehouses" resultType="com.ssg.demo.domain.WarehouseDTO">
+        SELECT
+            w.warehouse_code AS warehouseCode,
+            w.warehouse_name AS warehouseName,
+            w.location AS warehouseLocation,
+            w.capacity_limit AS capacityLimit,
+            m.member_code AS mamberCode,
+            m.name AS name,
+            m.email AS email
+        FROM tbl_warehouse w
+                 LEFT JOIN tbl_member m ON w.manager_code = m.member_code
+    </select>
+
+    <insert id="insertWarehouse" parameterType="com.ssg.demo.domain.WarehouseDTO">
+        INSERT INTO tbl_warehouse
+            (warehouse_name, location, capacity_limit, manager_code)
+        VALUES (#{warehouseName}, #{warehouseLocation}, #{capacityLimit}, #{mamberCode})
+    </insert>
+
+    <update id="updateWarehouse" parameterType="com.ssg.demo.domain.WarehouseDTO">
+        UPDATE tbl_warehouse SET
+                                 warehouse_name = #{warehouseName},
+                                 manager_code = #{mamberCode}
+        WHERE warehouse_code = #{warehouseCode}
+    </update>
+</mapper>
