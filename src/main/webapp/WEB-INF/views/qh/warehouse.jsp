@@ -332,7 +332,9 @@
                                 <tbody>
                                 <!-- SSR 부분: 서버에서 넘겨받은 warehouses 리스트를 출력 -->
                                 <c:forEach var="w" items="${warehouses}">
-                                    <tr>
+                                    <tr data-warehouse-code="${w.warehouseCode}"
+                                        data-warehouse-name="${w.warehouseName}"
+                                        data-member-code="${w.memberCode}">
                                         <td>${w.warehouseCode}</td>
                                         <td>${w.warehouseName}</td>
                                         <td>${w.warehouseLocation}</td>
@@ -482,20 +484,22 @@
                             <!-- 창고명 (중복확인 버튼 포함) -->
                             <form id="modifyWarehouseForm" action="<c:url value='/warehouse/update'/>" method="post">
 
+                                <input type="hidden" name="warehouseCode" id="modifyWarehouseCode" />
+
                                 <!-- 창고명 입력 & 중복확인 -->
                                 <div class="mb-3">
                                     <label for="modifyWarehouseName" class="form-label">창고명 (*)</label>
                                     <div class="d-flex gap-2">
-                                        <input type="text" class="form-control" id="modifyWarehouseName" placeholder="창고명을 입력하세요">
-                                        <button type="button" class="main-btn primary-btn btn-hover btn-smaller" id="modifyCheckDuplicateWarehouse">중복 확인</button>
+                                        <input name="warehouseName" type="text" class="form-control" id="modifyWarehouseName" placeholder="창고명을 입력하세요">
+                                        <button type="submit" name="action" value="checkDuplicate" class="main-btn primary-btn btn-hover btn-smaller" id="modifyCheckDuplicateWarehouse">중복 확인</button>
                                     </div>
                                 </div>
 
                                 <!-- 담당자 드롭박스 -->
                                 <div class="mb-3">
                                     <label for="modifyWarehouseManager" class="form-label">담당자</label>
-                                    <select class="form-select" id="modifyWarehouseManager" name="manager">
-                                        <option value="">담당자 선택</option>
+                                    <select name="memberCode" class="form-select" id="modifyWarehouseManager">
+                                        <option value="">담당자 삭제</option>
                                         <c:forEach var="manager" items="${managers}">
                                             <option value="${manager.memberCode}">
                                                 ${manager.memberCode} | ${manager.name}
@@ -506,7 +510,7 @@
 
                                 <!-- 모달 푸터: 제출 및 취소 버튼 -->
                                 <div class="text-end">
-                                    <button type="submit" class="main-btn primary-btn btn-hover text-center" id="warehouseModifyBtn">수정</button>
+                                    <button type="submit" name="action" value="submitUpdate" class="main-btn primary-btn btn-hover text-center" id="warehouseModifyBtn">수정</button>
                                 </div>
 
                             </form>
@@ -540,7 +544,7 @@
                             <div id="deleteContentNo" style="display: none;">
                                 <h5>선택한 창고는 진행 중인 업무로 인해 삭제할 수 없습니다.</h5><br>
                                 <!-- 창고명(담당자ID|담당자명) 표시 -->
-                                <div id="deleteWarehouseNameNo" class="list-group mb-3"></div>
+                                <div name="warehouseName" id="deleteWarehouseNameNo" class="list-group mb-3"></div>
                             </div>
 
                             <!-- 모달 푸터 -->
@@ -631,32 +635,6 @@
                 { targets: [0, 1, 2, 3, 4, 5, 6], className: 'text-center' } // JS 속성으로 가운데 정렬
             ],
             order: [[0, 'asc']],
-            columns: [
-                { data: 'warehouseCode', title: '창고코드' },
-                { data: 'warehouseName', title: '창고명' },
-                { data: 'warehouseLocation', title: '소재지' },
-                { data: 'capacityLimit', title: '수용한도' },
-                { data: 'name', title: '담당자' },
-                { data: 'email', title: '담당자 이메일' },
-                { // Edit/Delete 버튼
-                    data: null,
-                    orderable: false,
-                    searchable: false,
-                    render: function(data, type, row, meta) {
-                        return `
-                  <div class="btu-group-2">
-                    <button class="btn btn-edit text-primary-2">
-                      <i class="lni lni-pencil"></i>
-                    </button>
-                    <button class="btn btn-delete text-danger">
-                      <i class="lni lni-trash-can"></i>
-                    </button>
-                  </div>
-                `;
-                    },
-                    title: '설정'
-                }
-            ],
             paging: true,
             pageLength: 10,
             lengthMenu: [[5, 10, 20, -1], ['5개', '10개', '20개', '전체']],
@@ -880,80 +858,31 @@
         // 수정 버튼 클릭 시
         // 창고 수정 모달 열기 이벤트 (DataTable 내 동적 생성 행의 수정 버튼 클릭 시)
         // 전역으로 초기 상태 관리
-        var isModifyWarehouseNameChecked = false;
-        var selectedRowData;
+        $(function() {
+            $('#datatable tbody').on('click', '.btn-edit', function(e) {
+                e.preventDefault();
+                const $tr = $(this).closest('tr');
 
-        // 수정 모달 표시될 때 초기화 및 데이터 채우기
-        $('#warehouseEditModal').on('show.bs.modal', function () {
-            if (selectedRowData) {
-                $("#modifyWarehouseName").val(selectedRowData.warehouseName);
-                $("#modifyWarehouseManager").val(selectedRowData.mamberCode || "");
-            }
-            isModifyWarehouseNameChecked = false;
-        });
+                // 1) data-* 에서 값 꺼내기
+                const code = $tr.data('warehouse-code');
+                const name = $tr.data('warehouse-name');
+                const mgr  = $tr.data('member-code') || '';
 
-        // DataTable에서 "수정" 버튼 클릭 시 모달 호출 및 데이터 저장
-        $('#datatable tbody').on('click', '.btn-edit', function (e) {
-            e.preventDefault();
-            var table = $('#datatable').DataTable();
-            selectedRowData = table.row($(this).closest('tr')).data();
-            $("#warehouseEditModal").modal("show");
-        });
+                // 2) 폼에 세팅
+                $('#modifyWarehouseCode').val(code);
+                $('#modifyWarehouseName').val(name);
+                $('#modifyWarehouseManager').val(mgr);
 
-        // 창고명 변경 시 중복체크 초기화
-        $("#modifyWarehouseName").on("input", function () {
-            isModifyWarehouseNameChecked = false;
-        });
+                // 3) 모달 띄우기
+                $('#warehouseEditModal').modal('show');
+            });
 
-        // 중복확인 버튼 클릭
-        $("#modifyCheckDuplicateWarehouse").on("click", function () {
-            var wname = $("#modifyWarehouseName").val().trim();
-            if (!wname) {
-                alert("창고명을 입력하세요.");
-                return;
-            }
-            var regName = /^[A-Za-z0-9가-힣]{1,10}$/;
-            if (!regName.test(wname)) {
-                alert("창고명은 한글, 영어, 숫자만 가능하며 최대 10글자까지 입력할 수 있습니다.");
-                return;
-            }
-            // 여기서 실제 AJAX로 중복 체크 가능
-            alert("사용 가능한 창고명입니다.");
-            isModifyWarehouseNameChecked = true;
-        });
-
-        // 수정 폼 제출 이벤트 (서버로 전송)
-        $("#modifyWarehouseForm").on("submit", function (e) {
-            e.preventDefault();
-            var wname = $("#modifyWarehouseName").val().trim();
-            var managerCode = $("#modifyWarehouseManager").val();
-
-            if (!wname) {
-                alert("필수 입력 항목이 비어있습니다. 모두 입력해주세요.");
-                return;
-            }
-
-            if (!isModifyWarehouseNameChecked) {
-                alert("창고명 중복 체크를 해주세요.");
-                return;
-            }
-
-            // AJAX를 통해 서버로 수정 요청 보내기
-            $.ajax({
-                url: '/warehouse/update',
-                type: 'POST',
-                data: {
-                    warehouseCode: selectedRowData.warehouseCode,
-                    warehouseName: wname,
-                    managerCode: managerCode
-                },
-                success: function(response) {
-                    alert("창고 정보가 성공적으로 수정되었습니다.");
-                    $("#warehouseEditModal").modal("hide");
-                    $('#datatable').DataTable().ajax.reload(null, false);
-                },
-                error: function(error) {
-                    alert("수정 실패: " + error.responseText);
+            // 제출 전 정규검사만
+            $('#modifyWarehouseForm').on('submit', function(e) {
+                const w = $('#modifyWarehouseName').val().trim();
+                if (!/^[A-Za-z0-9가-힣]{1,10}$/.test(w)) {
+                    alert('창고명은 한글·영어·숫자 1~10자만 가능합니다.');
+                    e.preventDefault();
                 }
             });
         });
@@ -1000,8 +929,8 @@
                 $('#deleteContentOk').show();
                 $('#deleteContentNo').hide();
 
-                // 담당자 정보: 만약 rowData.mamberCode가 있다면 "담당자코드 | 담당자명"을, 없으면 "담당자없음"으로 표시
-                var 담당자정보 = rowData.mamberCode ? (rowData.mamberCode + " | " + rowData.name) : "담당자없음";
+                // 담당자 정보: 만약 rowData.memberCode가 있다면 "담당자코드 | 담당자명"을, 없으면 "담당자없음"으로 표시
+                var 담당자정보 = rowData.memberCode ? (rowData.memberCode + " | " + rowData.name) : "담당자없음";
 
                 $('#deleteWarehouseNameOk').html(
                     `<li class="list-group-item d-flex justify-content-between align-items-center">
@@ -1016,7 +945,7 @@
                 $('#deleteContentOk').hide();
                 $('#deleteContentNo').show();
 
-                var 담당자정보 = rowData.mamberCode ? (rowData.mamberCode + " | " + rowData.name) : "담당자없음";
+                var 담당자정보 = rowData.memberCode ? (rowData.memberCode + " | " + rowData.name) : "담당자없음";
 
                 $('#deleteWarehouseNameNo').html(
                     `<li class="list-group-item d-flex justify-content-between align-items-center">

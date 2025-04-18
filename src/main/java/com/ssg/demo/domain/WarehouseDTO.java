@@ -6,7 +6,7 @@ public class WarehouseDTO {
   private String warehouseName;     // 창고 명 (warehouse_name)
   private String warehouseLocation; // 소재지 (location)
   private int capacityLimit;        // 수용 한도 (capacity_limit)
-  private String mamberCode;        // 담당자 코드 (member_code, 매퍼에서는 mamberCode로 매핑)
+  private String memberCode;        // 담당자 코드 (member_code, 매퍼에서는 mamberCode로 매핑)
   private String name;              // 담당자 이름 (member name)
   private String email;             // 담당자 이메일
   
@@ -21,7 +21,7 @@ public class WarehouseDTO {
     this.warehouseName = warehouseName;
     this.warehouseLocation = warehouseLocation;
     this.capacityLimit = capacityLimit;
-    this.mamberCode = mamberCode;
+    this.memberCode = mamberCode;
     this.name = name;
     this.email = email;
   }
@@ -60,14 +60,6 @@ public class WarehouseDTO {
     this.capacityLimit = capacityLimit;
   }
   
-  public String getMamberCode() {
-    return mamberCode;
-  }
-  
-  public void setMamberCode(String mamberCode) {
-    this.mamberCode = mamberCode;
-  }
-  
   public String getName() {
     return name;
   }
@@ -82,5 +74,13 @@ public class WarehouseDTO {
   
   public void setEmail(String email) {
     this.email = email;
+  }
+  
+  public String getMemberCode() {
+    return memberCode;
+  }
+  
+  public void setMemberCode(String memberCode) {
+    this.memberCode = (memberCode == null || memberCode.isBlank()) ? null : memberCode;
   }
 }

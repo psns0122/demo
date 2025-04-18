@@ -19,13 +19,13 @@
     <insert id="insertWarehouse" parameterType="com.ssg.demo.domain.WarehouseDTO">
         INSERT INTO tbl_warehouse
             (warehouse_name, location, capacity_limit, manager_code)
-        VALUES (#{warehouseName}, #{warehouseLocation}, #{capacityLimit}, #{mamberCode})
+        VALUES (#{warehouseName}, #{warehouseLocation}, #{capacityLimit}, #{memberCode})
     </insert>
 
     <update id="updateWarehouse" parameterType="com.ssg.demo.domain.WarehouseDTO">
         UPDATE tbl_warehouse SET
                                  warehouse_name = #{warehouseName},
-                                 manager_code = #{mamberCode}
+                                 manager_code = #{memberCode}
         WHERE warehouse_code = #{warehouseCode}
     </update>
 </mapper>
